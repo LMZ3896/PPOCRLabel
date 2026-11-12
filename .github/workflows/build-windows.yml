@@ -36,8 +36,9 @@ jobs:
           pyinstaller --noconfirm --clean --onefile --console
           --collect-all paddleocr --collect-all paddlex
           --collect-all paddle --collect-all pyclipper
-          --add-data "data;data" --add-data "resources;resources"
-          --paths libs PPOCRLabel.py
+          --collect-submodules libs --paths .
+          --add-data "libs;libs" --add-data "data;data"
+          --add-data "resources;resources" PPOCRLabel.py
 
       - name: Check executable starts
         run: |
