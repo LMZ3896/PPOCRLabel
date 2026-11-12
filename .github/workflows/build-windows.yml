@@ -1,0 +1,53 @@
+name: Build PPOCRLabel Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out PPOCRLabel v3.1.6
+        uses: actions/checkout@v4
+        with:
+          repository: PFCCLab/PPOCRLabel
+          ref: v3.1.6
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pyinstaller paddlepaddle
+
+      - name: Generate Qt resources
+        run: pyrcc5 -o libs/resources.py resources.qrc
+
+      - name: Build executable
+        run: >-
+          pyinstaller --noconfirm --clean --onefile --console
+          --collect-all paddleocr --collect-all paddlex
+          --collect-all paddle --collect-all pyclipper
+          --add-data "data;data" --add-data "resources;resources"
+          --paths libs PPOCRLabel.py
+
+      - name: Check executable starts
+        run: |
+          & .\dist\PPOCRLabel.exe --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPOCRLabel-v3.1.6-windows-x64
+          path: dist/PPOCRLabel.exe
+          if-no-files-found: error
+          retention-days: 7
